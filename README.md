@@ -3,8 +3,14 @@ DatePicker create example
 
 
 var cal = new MCalendar(
-'.calendarContainer',
-{
+
+
+    '.calendarContainer',
+
+
+    {
+
+
     calendarsCount:5 ,
     calendarType: 'fromTo',
     calendarView: 'slide3',
@@ -17,7 +23,9 @@ var cal = new MCalendar(
     selectCollBack: function (date){
         console.log(date)
     }
-})
+    
+    
+    })
 
 
 
