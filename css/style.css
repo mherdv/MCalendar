@@ -1,0 +1,144 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.rendered {
+  padding: 10px;
+  margin-top: 1px;
+}
+.rendered:not(.not_in_mount ):not(.disabled ):hover {
+  background: yellow !important;
+}
+.next_prev_container span {
+  margin: 0 10px;
+}
+.days_container {
+  display: inline-flex;
+  flex-direction: column;
+  padding: 1px;
+  text-align: center;
+}
+.days_container span {
+  cursor: pointer;
+}
+.not_in_mount ,.disabled{
+  background: gray !important;
+  
+  opacity: .5;
+  cursor: initial;
+}
+.MContainer {
+  display: inline-block;
+  background: lightseagreen;
+  margin: 2% 55px;
+  position: relative;
+  padding: 10px;
+  border-radius: 3px;
+}
+.fastChangeContainer ul li {
+  list-style: none;
+  padding-right: 10px;
+}
+.monthList {
+  border-right: 1px solid lawngreen;
+}
+.next_prev_container {
+  position: relative;
+  margin: 15px 0;
+  left: 0;
+  width: 100%;
+  align-items: baseline;
+  display: flex;
+  justify-content: space-between;
+}
+.next_prev_container span {
+  cursor: pointer;
+}
+.date_header {
+  text-align: center;
+  cursor: pointer;
+}
+.fastChangeContainer {
+  position: absolute;
+  display: flex;
+  width: 286px;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  background: lightblue;
+  padding: 0 10px 18px 15px;
+  padding-top: 20px;
+  box-shadow: 2px 4px 20px 4px grey;
+  border-radius: 5px;
+}
+.yearList,
+.monthList {
+  overflow: auto;
+  line-height: 1.5;
+  width: 100%;
+  height: 100%;
+  padding: 25px 10px !important;
+  text-align: center;
+  padding-right: 17px;
+  box-sizing: content-box;
+}
+.selected{
+    background:lightseagreen;
+}
+.yearList li,
+.monthList li{
+    cursor: pointer;
+}
+.yearList li:hover,
+.monthList li:hover{
+    background:lightseagreen;
+}
+.yearList {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.monthList {
+  height: 33%;
+  padding: 34px 34px;
+  margin: 12px 0;
+}
+.fastChangeContainer > div:not(.selectedDateContainer) {
+  height: 133px;
+  width: 50%;
+  overflow: hidden;
+  box-shadow: inset 0px -2px 27px 0px grey;
+}
+.selectedDateContainer {
+  width: 100%;
+  display: flex;
+  height: 37px;
+  align-items: center;
+  justify-content: space-between;
+}
+.selectedDateContainer span {
+  display: inline-block;
+  border: 1px solid gray;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+.slide{
+  width: 400px;
+  overflow: hidden;
+  display: block;
+  white-space: nowrap;
+}
+.scroll{
+  width: 100%;
+  height: 100vh;
+  overflow-y: scroll;
+  padding-right: 17px; /* Increase/decrease this value for cross-browser compatibility */
+  box-sizing: content-box; 
+
+}
+.scrollElementParent{
+  height: 100%;
+  height: 100vh;
+  overflow: hidden;
+  margin: auto;
+}
