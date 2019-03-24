@@ -36,7 +36,6 @@ calendarType can be normal , fromTo , lot.
 calendarView can be normal , slide2 , slide3, scroll .
 
 
-scroll  is not fully implemented
 
 
 selectCollBack is dev collBack .
