@@ -1,5 +1,4 @@
 
-
 class MCalendar {
   constructor(container, options) {
     this._container = document.querySelector(container);
@@ -11,29 +10,35 @@ class MCalendar {
     this.clickCount = 0;
     this.fastChangeDateParams = {};
     this.selectCollBack = options.selectCollBack;
+    this.scrollTo;
+    this.scrollCalendarAndCount = 4;
 
+    this.scrollAppendDate = new Date(
+      new Date(+this.startDate).setMonth(this.startDate.getMonth() + 9)
+    );
+    this.scrollPrependDate = new Date(
+      new Date(+this.startDate).setMonth(this.startDate.getMonth() - 1)
+    );
     this.availableDates = options.availableDates || null;
 
-    if (this.calendarType == "fromTo" || this.calendarType == "lot")
-      this.selectedDate = [];
-
-    if (this.calendarView == "slide2" || this.calendarView == "slide3") {
-      this.startDate.setMonth(this.startDate.getMonth() - 1);
-    }
-    if (this.calendarView == "scroll") {
-      this.startDate.setMonth(this.startDate.getMonth() - 3);
-    }
+    this.thisParamsChanging();
     this.createCalendar();
     this.fastChangeDate();
-
-    // if(allCalendarsContainer)
   }
 
+  htmlToElements(html){
+    var template = document.createElement("template");
+    template.innerHTML = html;
+    return template.content.childNodes;
+  }
   set startDate(date) {
     this._startDate = date;
   }
   set selectedDate(date) {
     this._selectedDate = date;
+  }
+  set calendarsCount(data) {
+    this._calendarsCount = data;
   }
   get container() {
     return this._container;
@@ -48,6 +53,26 @@ class MCalendar {
     return this._selectedDate;
   }
 
+  thisParamsChanging() {
+    if (this.calendarType == "fromTo" || this.calendarType == "lot")
+      this.selectedDate = [];
+
+    if (this.calendarView == "slide2" || this.calendarView == "slide3") {
+      this.startDate.setMonth(this.startDate.getMonth() - 1);
+    }
+    // if (this.calendarView == "scroll") {
+    //   this.startDate.setMonth(this.startDate.getMonth() - 3);
+    // }
+    if (this.calendarView == "slide2") {
+      this.calendarsCount = 4;
+    }
+    if (this.calendarView == "slide3") {
+      this.calendarsCount = 5;
+    }
+    if (this.calendarView == "scroll") {
+      this.calendarsCount = 9;
+    }
+  }
   setCalendarView() {
     var type = this.calendarView;
     if (type == "slide2") {
@@ -120,36 +145,33 @@ class MCalendar {
       parseInt(style.marginRight) +
       17;
 
-    var oneElemHeight =
-      parseInt(style.width) +
-      parseInt(style.marginTop) +
-      parseInt(style.marginBottom);
-    // `element` is the element you want to wrap
-    var parent = container.parentNode;
-    var wrapper = document.createElement("div");
+    if (!this.scrollTo && !this.container.querySelector('.scrollElementParent')) {
+      // `element` is the element you want to wrap
+      var parent = container.parentNode;
+      var wrapper = document.createElement("div");
 
-    wrapper.classList.add("scrollElementParent");
-    // set the wrapper as child (instead of the element)
-    parent.replaceChild(wrapper, container);
-    // set element as child of wrapper
-    wrapper.appendChild(container);
-    wrapper.style.width = oneElemWidth + "px";
-    container.scrollTop = oneElemHeight * 3;
-    // var minusTop = 50;
+      wrapper.classList.add("scrollElementParent");
+      // set the wrapper as child (instead of the element)
+      parent.replaceChild(wrapper, container);
+      // set element as child of wrapper
+      wrapper.appendChild(container);
+      wrapper.style.width = oneElemWidth + "px";
+    }
+
+    container.scrollTop  = 30;
 
     container.addEventListener("scroll", event => {
       if (event.target.scrollTop == 0) {
+        this.scrollTo = "top";
+        var firstDiv = container.querySelector('div');
         
-        this.container.querySelector('.scroll').style.overflow = 'hidden'
-        this.startDate.setMonth(this.startDate.getMonth() - 3);
         this.createCalendar();
-        
+        container.scrollTop = firstDiv.offsetTop -30;
       } else if (
-        event.target.scrollTop >=
-        oneElemHeight * 5
+        event.target.scrollTop + 300 >=
+        event.target.scrollHeight - event.target.offsetHeight
       ) {
-        this.container.querySelector('.scroll').style.overflow = 'hidden'
-        this.startDate.setMonth(this.startDate.getMonth() + 2);
+        this.scrollTo = "bottom";
         this.createCalendar();
       }
     });
@@ -157,7 +179,7 @@ class MCalendar {
 
   getDaysInMonth(month, year) {
     // get 42 days in 1 datePicker
-  
+
     var date = new Date(year, month, 1);
     var days = [];
     var day = date.getDay();
@@ -190,11 +212,15 @@ class MCalendar {
     });
   }
 
-  createCalendar() {
-    // if(this.calendarView == 'slide2'){
-    //     this.startDate.setMonth(this.startDate.getMonth()-1)
-    // }
-    var datesToRender = this.dateInArray();
+  createCalendar(fastChangeDate) {
+    var datesToRender;
+
+    if (this.scrollTo && !fastChangeDate) {
+      datesToRender = this.scrollDatesInArray();
+    } else {
+      datesToRender = this.dateInArray();
+    }
+    // var datesToRender = this.dateInArray();
     var calendarsLength = datesToRender.length;
 
     var months = [
@@ -212,64 +238,48 @@ class MCalendar {
       "December"
     ];
     // clear Container
-    this.container.innerHTML = "";
+    if (!this.scrollTo ) this.container.innerHTML = "";
 
-    var allCalendarsContainer = document.createElement("div");
+
+    var allCalendarsContainer = this.container.querySelector(
+      ".allCalendarsContainer"
+    )
+      ? this.container.querySelector(".allCalendarsContainer")
+      : document.createElement("div");
     allCalendarsContainer.classList.add("allCalendarsContainer");
     var calendarContainer;
-    var yearAndMonth;
-    var buttonsContainer;
     var nextButton;
     var prevButton;
     var dates;
+    // console.log(calendarsLength);
+    
+    if(fastChangeDate){
+      allCalendarsContainer.innerHTML = '';
+    }
 
     for (var i = 0; i < calendarsLength; i++) {
-      // console.time('a')
       dates = this.renderedOneCalendar(
         datesToRender[i].days,
         datesToRender[i].month
       );
-      //   console.timeEnd('a')
+
       calendarContainer = document.createElement("div");
-      yearAndMonth = document.createElement("p");
-      buttonsContainer = document.createElement("div");
-      nextButton = document.createElement("span");
-      prevButton = document.createElement("span");
 
-      buttonsContainer.classList.add("next_prev_container");
-      nextButton.innerHTML = ">";
-      prevButton.innerHTML = "<";
+      var next_prev_container = this.htmlToElements(
+        `
+          <div class='next_prev_container'>
+              <span> < </span>
+              <p class='date_header' data-year="${dates.year}"> 
+                 ${dates.year + " _ " + months[dates.month]}
+              </p>
+              <span> > </span>
+          </div>
+      `.trim()
+      )[0];
 
-      buttonsContainer.appendChild(prevButton);
-
-      buttonsContainer.appendChild(yearAndMonth);
-
-      buttonsContainer.appendChild(nextButton);
-
-      prevButton.addEventListener("click", () => {
-        // this.startDate = this.startDate.setMonth(this.startDate.getMonth-1)
-        var cloneDate = new Date(+this.startDate);
-        cloneDate.setMonth(cloneDate.getMonth() - 1);
-        this.startDate = cloneDate;
-        this.createCalendar();
-        this.colorBetweenBackgrounds();
-      });
-      nextButton.addEventListener("click", () => {
-        // this.startDate = this.startDate.setMonth(this.startDate.getMonth-1)
-        var cloneDate = new Date(+this.startDate);
-        cloneDate.setMonth(cloneDate.getMonth() + 1);
-        this.startDate = cloneDate;
-        this.createCalendar();
-
-        this.colorBetweenBackgrounds();
-      });
-
-      calendarContainer.appendChild(buttonsContainer);
+      calendarContainer.appendChild(next_prev_container);
       calendarContainer.classList.add("MContainer");
-      yearAndMonth.innerHTML = dates.year + " _ " + months[dates.month];
-      yearAndMonth.setAttribute("data-year", dates.year);
-      yearAndMonth.classList.add("date_header");
-      // calendarContainer.appendChild(yearAndMonth)
+
       dates.days.forEach(e => {
         var container = document.createElement("div");
         container.classList.add("days_container");
@@ -279,14 +289,44 @@ class MCalendar {
         calendarContainer.appendChild(container);
       });
 
-      allCalendarsContainer.appendChild(calendarContainer);
-    }
+      nextButton = next_prev_container.querySelectorAll("span")[1];
+      prevButton = next_prev_container.querySelectorAll("span")[0];
+      if (!this.scrollTo) {
+        prevButton.addEventListener("click", () => {
+          this.startDate.setMonth(this.startDate.getMonth() - 1);
+          this.createCalendar();
+          // this.colorBetweenBackgrounds();
+        });
+        nextButton.addEventListener("click", () => {
+          this.startDate.setMonth(this.startDate.getMonth() + 1);
+          this.createCalendar();
+          // this.colorBetweenBackgrounds();
+        });
 
-    this.container.appendChild(allCalendarsContainer);
-    if (this.calendarView != "normal") {
-      console.log(132);
-      this.setCalendarView();
+        allCalendarsContainer.appendChild(calendarContainer);
+      } else {
+        var scrollContainer = this.container.querySelector(".scroll");
+        if (this.scrollTo == "bottom")
+          scrollContainer.appendChild(calendarContainer);
+        else {
+          scrollContainer.insertBefore(
+            calendarContainer,
+            scrollContainer.firstChild
+          );
+        }
+      }
     }
+    var isScrolled = !!this.scrollTo;
+
+    if (!isScrolled) {
+      console.log(this.scrollTo);
+      this.container.appendChild(allCalendarsContainer);
+      if (this.calendarView != "normal") {
+        console.log(132);
+        this.setCalendarView();
+      }
+    }
+    this.colorBetweenBackgrounds();
   }
 
   renderedOneCalendar(datesArray, month) {
@@ -340,6 +380,9 @@ class MCalendar {
         devClasses = devClasses.split(" ");
         if (res.disabled) {
           elem.classList.add("disabled", ...devClasses);
+        }
+        if (res.class_list) {
+          elem.classList.add(...devClasses);
         }
       }
 
@@ -436,7 +479,7 @@ class MCalendar {
               this.selectedDate[1] = date1;
               console.log(this.selectedDate);
             }
-            this.colorBetweenBackgrounds(date1, date2);
+            this.colorBetweenBackgrounds();
           } else {
             this.clickCount = 0;
             this.clearBackground();
@@ -460,17 +503,9 @@ class MCalendar {
   }
   dateInArray() {
     var count = this.calendarsCount;
-    if (this.calendarView == "slide2") {
-      count = 4;
-    }
-    if (this.calendarView == "slide3") {
-      count = 5;
-    }
-    if (this.calendarView == "scroll") {
-      count = 9;
-    }
+
     var date = this._startDate;
-    date = new Date(date);
+    date = new Date(+date);
 
     var month = date.getMonth();
     var year = date.getFullYear();
@@ -478,6 +513,30 @@ class MCalendar {
     for (var i = 0; i < count; i++) {
       datesArray.push(this.getDaysInMonth(month, year));
       date = new Date(date.setMonth(month + 1));
+      month = date.getMonth();
+      year = date.getFullYear();
+    }
+    // console.log(this._startDate)
+    return datesArray;
+  }
+
+  scrollDatesInArray() {
+    if (this.scrollTo == "top") {
+      var date = this.scrollPrependDate;
+    } else {
+      var date = this.scrollAppendDate;
+    }
+
+    var month = date.getMonth();
+    var year = date.getFullYear();
+    var datesArray = [];
+    for (var i = 0; i < this.scrollCalendarAndCount; i++) {
+      datesArray.push(this.getDaysInMonth(month, year));
+      if (this.scrollTo == "top") {
+        date.setMonth(month - 1);
+      } else {
+        date.setMonth(month + 1);
+      }
       month = date.getMonth();
       year = date.getFullYear();
     }
@@ -529,31 +588,56 @@ class MCalendar {
     selectedDateContainer.appendChild(confirmButton);
     fastChangeContainer.appendChild(selectedDateContainer);
 
-    confirmButton.addEventListener("click", _ => {
-      if (this.fastChangeDateParams.year)
+    confirmButton.addEventListener("click", event => {
+      if (this.fastChangeDateParams.year){
+
         this.startDate.setFullYear(this.fastChangeDateParams.year);
-      if (this.fastChangeDateParams.month)
+        this.scrollPrependDate.setFullYear(this.fastChangeDateParams.year);
+        // this.scrollAppendDate.setFullYear(this.fastChangeDateParams.year)
+
+      }
+
+      if (this.fastChangeDateParams.month){
+
         this.startDate.setMonth(this.fastChangeDateParams.month);
-      if (this.calendarView == "slide2" && this.fastChangeDateParams.month ||this.calendarView == "slide3" &&this.fastChangeDateParams.month ) {
+        this.scrollPrependDate.setMonth(this.fastChangeDateParams.month);
+      }
+      if (
+        (this.calendarView == "slide2" && this.fastChangeDateParams.month) ||
+        (this.calendarView == "slide3" && this.fastChangeDateParams.month)
+      ) {
         this.startDate.setMonth(this.fastChangeDateParams.month - 1);
       }
-      this.createCalendar();
+
+      this.scrollAppendDate.setFullYear(this.scrollPrependDate.getFullYear());
+      
+      this.scrollAppendDate.setMonth(this.scrollPrependDate.getMonth() + 9);
+      // console.log(
+      //   event.currentTarget,
+      //   event.currentTarget.closest(".MContainer")
+      // );
+      if(fastChangeContainer)
+      this.container.removeChild(fastChangeContainer);
+      this.scrollTo = '';
+      this.createCalendar(true);
       this.fastChangeDateParams = {};
       fastChangeContainer = false;
     });
 
-    closeButton.addEventListener("click", () => {
+    closeButton.addEventListener("click", event => {
+      if(fastChangeContainer)
       this.container.removeChild(fastChangeContainer);
       this.fastChangeDateParams = {};
       fastChangeContainer = false;
     });
+
     this.container.onclick = event => {
       if (event.target.closest(".date_header") || !fastChangeContainer) return;
       if (fastChangeContainer) this.container.removeChild(fastChangeContainer);
-
       this.fastChangeDateParams = {};
       fastChangeContainer = false;
     };
+
     fastChangeContainer.onclick = event => event.stopPropagation();
   }
 
